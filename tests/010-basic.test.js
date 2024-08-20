@@ -55,7 +55,7 @@ const runApp = (siteLocation) => {
     });
 };
 
-describe('@pklaschka/ssblc', () => {
+describe('@waylay/ssblc', () => {
     describe('test-site-1: Site with no broken links', () => {
         let results;
 

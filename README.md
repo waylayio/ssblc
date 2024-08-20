@@ -1,8 +1,8 @@
-# @pklachka/ssblc
+# @waylay/ssblc
 
 Static Site Broken Link Checker
 
-![CI Status Badge](https://github.com/pklaschka/ssblc/workflows/CI/badge.svg?branch=master)
+![CI Status Badge](https://github.com/waylayio/ssblc/workflows/CI/badge.svg?branch=master)
 
 A broken-link checker for static sites, like the ones generated with docsify that can get used, for example, for CI purposes on docsify docs (this is what I've developed it for).
 
@@ -12,7 +12,7 @@ It recursively checks internal links found on the static website (until every in
 You can either run it by just using `npx`, in which case you won't have to install it, or first install it with
 
 ```shell script
-npm install -g @pklaschka/ssblc
+npm install -g @waylay/ssblc
 ```
 
 ## Usage
@@ -27,7 +27,7 @@ after which the checker will begin its work.
 To use it with `npx`, simply run
 
 ```shell script
-npx @pklaschka/ssblc
+npx @waylay/ssblc
 ```
 
 Alternatively, you can also specify an absolute or relative path to the directory of the site, e.g., like this:

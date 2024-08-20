@@ -20,15 +20,15 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pklaschka/ssblc"
+    "url": "https://github.com/waylayio/ssblc"
   },
   "bugs": {
-    "url": "https://github.com/pklaschka/ssblc/issues"
+    "url": "https://github.com/waylayio/ssblc/issues"
   },
   "engines": {
     "node": ">=18"
   },
-  "homepage": "https://github.com/pklaschka/ssblc#readme",
+  "homepage": "https://github.com/waylayio/ssblc#readme",
   "dependencies": {
     "express": "^4.19.2",
     "puppeteer": "^23.1.0"
