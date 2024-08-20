@@ -15,13 +15,15 @@ let port = 3000;
 let baseUrl = `http://localhost:${port}`;
 let ignoreStatuses = new Set();
 let dryRun = false;
+let dir = process.cwd();
 
-let dir = path.resolve(__dirname, process.argv[2] || process.cwd());
 let contextFile = null;
 let vars = {};
 
 process.argv.forEach((arg, index) => {
-    if (arg === '--context' && process.argv[index + 1]) {
+    if (arg === '--dir' && process.argv[index + 1]) {
+        dir = path.resolve(process.argv[index + 1]);
+    } else if (arg === '--context' && process.argv[index + 1]) {
         contextFile = path.resolve(process.argv[index + 1]);
         if (fs.existsSync(contextFile)) {
             vars = JSON.parse(fs.readFileSync(contextFile, 'utf8'));
@@ -51,11 +53,11 @@ if (process.argv.includes('-h') || process.argv.includes('--help')) {
     console.log('A broken-link checker for static sites, like the ones generated with docsify');
     console.log();
     console.log('Usage:');
-    console.log('ssblc [directory]\tChecks the static site in the directory, CWD if none is specified');
+    console.log('ssblc --dir [directory]\tChecks the static site in the specified directory, defaults to CWD if not specified');
     console.log('--context [file]\tLoads a JSON file with context variables for link replacement');
     console.log('--max-concurrent-checks [number]\tSets the maximum number of concurrent checks (default: 5)');
     console.log('--protocol-timeout [milliseconds]\tSets the protocol timeout for Puppeteer (default: 30000 ms)');
-    console.log('--page-load-timeout [milliseconds]\tSets the page load timeout for Puppeteer (default: 60000 ms)');
+    console.log('--page-load-timeout [milliseconds]\tSets the page load timeout for Puppeteer (default: 30000 ms)');
     console.log('--port [number]\tSets the port number for the local server (default: 3000)');
     console.log('--ignore-statuses [statuses]\tComma-separated list of HTTP statuses to ignore (e.g., 401,403)');
     console.log('--dry-run\tIf present, exit with code 0 even if errors are found');
@@ -202,8 +204,8 @@ if (process.argv.includes('-h') || process.argv.includes('--help')) {
 
             while (foundLinks.size > 0) {
                 const linkBatch = Array.from(foundLinks).splice(0, maxConcurrentChecks);
-                linkBatch.forEach(link => foundLinks.delete(link));
                 await Promise.all(linkBatch.map((link, i) => checkLink(pagePool[i % maxConcurrentChecks], link)));
+                linkBatch.forEach(link => foundLinks.delete(link));
             }
 
             await Promise.all(pagePool.map(page => page.removeAllListeners('response').close()));
@@ -247,5 +249,8 @@ if (process.argv.includes('-h') || process.argv.includes('--help')) {
         };
 
         runServer();
+    } else {
+        console.error(`Directory not found: ${dir}`);
+        process.exit(1);
     }
 }
