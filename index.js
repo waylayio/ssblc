@@ -10,7 +10,7 @@ const packageInfo = require('./package');
 
 let maxConcurrentChecks = 5;
 let protocolTimeout = 30000;
-let pageLoadTimeout = 60000;
+let pageLoadTimeout = 30000;
 let port = 3000;
 let baseUrl = `http://localhost:${port}`;
 let ignoreStatuses = new Set();
@@ -67,11 +67,11 @@ if (process.argv.includes('-h') || process.argv.includes('--help')) {
     console.log(`by ${packageInfo.author}`);
     process.exit(0);
 } else {
-    let found = 0;
-    let checked = 0;
+    let checkedLinks = new Set();
 
     let foundLinks = new Set([`${baseUrl}/`]);
-    let checkedLinks = new Set();
+    let found = foundLinks.size;
+
     let unfoundLinks = new Set();
     let ignoredLinks = new Set();
 
@@ -144,6 +144,8 @@ if (process.argv.includes('-h') || process.argv.includes('--help')) {
             const checkLink = async (page, link) => {
                 link = replaceVars(link);
 
+                if (checkedLinks.has(link)) return;
+
                 page.once("response", response => {
                     const request = response.request();
                     const url = request.url();
@@ -165,10 +167,8 @@ if (process.argv.includes('-h') || process.argv.includes('--help')) {
                 });
 
                 try {
-                    if (checkedLinks.has(link)) return;
-
                     checkedLinks.add(link);
-                    console.log(`${checked + 1}/${found + 1} Checking link: ${link}`);
+                    console.log(`${checkedLinks.size}/${found} Checking link: ${link}`);
                     const response = await page.goto(link, { timeout: pageLoadTimeout, waitUntil: 'networkidle2' });
 
                     if (response?.status() < 200 || response?.status() > 299) {
@@ -181,17 +181,18 @@ if (process.argv.includes('-h') || process.argv.includes('--help')) {
 
                     if (link.startsWith(baseUrl)) {
                         const content = await page.content();
-                        const newLinks = Array.from(
+                        const newLinks = new Set(Array.from(
                             content.matchAll(/href="([^"]*)"/g),
                             m => m[1]
                         ).map(nlink => url.resolve(link, nlink))
                             .filter(nlink => !checkedLinks.has(nlink))
                             .filter(nlink => !foundLinks.has(nlink))
-                            .filter(nlink => !foundLinks.has(nlink))
+                            .filter(nlink => !unfoundLinks.has(nlink))
+                            .filter(nlink => !ignoredLinks.has(nlink))
                             .filter(nlink => !nlink.startsWith('mailto:'))
-                            .filter(nlink => !nlink.startsWith('tel:'));
+                            .filter(nlink => !nlink.startsWith('tel:')));
                         newLinks.forEach(nlink => foundLinks.add(nlink));
-                        found += newLinks.length;
+                        found += newLinks.size;
                     }
                 } catch (error) {
                     console.error(`Failed to load ${link}: ${error.message}`);
@@ -200,10 +201,9 @@ if (process.argv.includes('-h') || process.argv.includes('--help')) {
             };
 
             while (foundLinks.size > 0) {
-                const linkBatches = Array.from(foundLinks).splice(0, maxConcurrentChecks);
-                linkBatches.forEach(link => foundLinks.delete(link));
-                await Promise.all(linkBatches.map((link, i) => checkLink(pagePool[i % maxConcurrentChecks], link)));
-                checked += linkBatches.length;
+                const linkBatch = Array.from(foundLinks).splice(0, maxConcurrentChecks);
+                linkBatch.forEach(link => foundLinks.delete(link));
+                await Promise.all(linkBatch.map((link, i) => checkLink(pagePool[i % maxConcurrentChecks], link)));
             }
 
             await Promise.all(pagePool.map(page => page.removeAllListeners('response').close()));
@@ -225,7 +225,7 @@ if (process.argv.includes('-h') || process.argv.includes('--help')) {
                     console.log('\n=== Summary ===');
                     console.log(`Elapsed Time: ${elapsedTime} seconds`);
                     console.log(`Found Links: ${found}`);
-                    console.log(`Checked Links: ${checked}`);
+                    console.log(`Checked Links: ${checkedLinks.size}`);
                     console.log(`Broken Links: ${unfoundLinks.size}`);
                     console.log(`Ignored Links (--ignore-statuses): ${ignoredLinks.size}`);
 
