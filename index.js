@@ -70,6 +70,7 @@ if (process.argv.includes('-h') || process.argv.includes('--help')) {
     process.exit(0);
 } else {
     let checkedLinks = new Set();
+    let checked = 0
 
     let foundLinks = new Set([`${baseUrl}/`]);
     let found = foundLinks.size;
@@ -144,11 +145,16 @@ if (process.argv.includes('-h') || process.argv.includes('--help')) {
             );
 
             const checkLink = async (page, link) => {
+                checked++;
+                
                 link = replaceVars(link);
 
-                if (checkedLinks.has(link)) return;
+                if (checkedLinks.has(link)) {
+                    console.log(`Link ${link} already checked`);
+                    return;
+                }
 
-                page.once("response", response => {
+                page.once('response', response => {
                     const request = response.request();
                     const url = request.url();
 
@@ -170,7 +176,7 @@ if (process.argv.includes('-h') || process.argv.includes('--help')) {
 
                 try {
                     checkedLinks.add(link);
-                    console.log(`${checkedLinks.size}/${found} Checking link: ${link}`);
+                    console.log(`${checked}/${found} Checking link: ${link}`);
                     const response = await page.goto(link, { timeout: pageLoadTimeout, waitUntil: 'networkidle2' });
 
                     if (response?.status() < 200 || response?.status() > 299) {
@@ -199,6 +205,8 @@ if (process.argv.includes('-h') || process.argv.includes('--help')) {
                 } catch (error) {
                     console.error(`Failed to load ${link}: ${error.message}`);
                     unfoundLinks.add(link);
+                } finally {
+                    page.removeAllListeners('response');
                 }
             };
 
@@ -227,7 +235,7 @@ if (process.argv.includes('-h') || process.argv.includes('--help')) {
                     console.log('\n=== Summary ===');
                     console.log(`Elapsed Time: ${elapsedTime} seconds`);
                     console.log(`Found Links: ${found}`);
-                    console.log(`Checked Links: ${checkedLinks.size}`);
+                    console.log(`Checked Links: ${checked}`);
                     console.log(`Broken Links: ${unfoundLinks.size}`);
                     console.log(`Ignored Links (--ignore-statuses): ${ignoredLinks.size}`);
 
