@@ -130,6 +130,7 @@ if (process.argv.includes('-h') || process.argv.includes('--help')) {
                     await page.setDefaultNavigationTimeout(protocolTimeout);
                     await page.setCacheEnabled(false);
                     await page.setRequestInterception(true);
+                    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3');
 
                     // Disable JavaScript and images to reduce load time
                     page.on('request', (req) => {
@@ -240,16 +241,16 @@ if (process.argv.includes('-h') || process.argv.includes('--help')) {
                     console.log(`Ignored Links (--ignore-statuses): ${ignoredLinks.size}`);
 
                     if (ignoredLinks.size > 0) {
-                        console.warn('\nIgnored links:');
+                        console.log('\nIgnored links:');
                         console.log(Array.from(ignoredLinks).reduce((previousValue, currentValue) => previousValue + '- ' + currentValue + '\n', ''));
                     }
 
                     if (unfoundLinks.size > 0) {
-                        console.warn('\nBroken links were detected:');
+                        console.log('\nBroken links were detected:');
                         console.log(Array.from(unfoundLinks).reduce((previousValue, currentValue) => previousValue + '- ' + currentValue + '\n', ''));
                         process.exit(dryRun ? 0 : 1);
                     } else {
-                        console.info('All checks passed, no broken links detected...');
+                        console.log('All checks passed, no broken links detected...');
                         process.exit(0);
                     }
                 });
