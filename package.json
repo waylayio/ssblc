@@ -1,6 +1,6 @@
 {
   "name": "@waylay/ssblc",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "description": "Static Site Broken Link Chacker: A broken-link checker for static sites, like the ones generated with docsify",
   "main": "index.js",
   "bin": "index.js",
